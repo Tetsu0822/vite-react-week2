@@ -15,7 +15,7 @@ export default defineConfig([
     ],
     languageOptions: {
       ecmaVersion: 2020,
-      globals: globals.browser,
+      globals: globals.browser, // 瀏覽器環境 接受 window, fetch, document 相關變數
       parserOptions: {
         ecmaVersion: 'latest',
         ecmaFeatures: { jsx: true },
