@@ -1,5 +1,5 @@
 // 外部資源
-import { use, useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import axios from 'axios'
 import { Modal } from 'bootstrap'
 
