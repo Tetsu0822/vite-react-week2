@@ -123,7 +123,7 @@ function App() {
                 {tempProduct ? (
                   <div className="card mb-3">
                     <img src={tempProduct.imageUrl} className="card-img-top primary-image" alt="主圖" />
-                    <div className="card-body">
+                    <div className="card-body text-start">
                       <h5 className="card-title">
                         {tempProduct.title}
                         <span className="badge bg-primary ms-2">{
