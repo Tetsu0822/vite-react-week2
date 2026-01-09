@@ -1,25 +1,191 @@
-import { Routes, Route } from "react-router-dom";
-import Navbar from "./components/Navbar.jsx";
-import Home from "./pages/Home.jsx";
-import About from "./pages/About.jsx";
-import AlbumLayout from "./pages/AlbumLayout.jsx";
-import AlbumIndex from "./pages/AlbumIndex.jsx";
+// import { Routes, Route } from "react-router-dom";
+import { useState } from "react";
+import "@fontsource/noto-sans-tc"; // Defaults to weight 400
+// To specify a specific weight:
+import "@fontsource/noto-sans-tc/400.css";
+import "@fontsource/noto-sans-tc/700.css";
+// import Navbar from "./components/Navbar.jsx";
+// import Home from "./pages/Home.jsx";
+// import About from "./pages/About.jsx";
+// import AlbumLayout from "./pages/AlbumLayout.jsx";
+// import AlbumIndex from "./pages/AlbumIndex.jsx";
+import axios from "axios";
+const API_BASE = import.meta.env.VITE_API_BASE;
+const API_PATH = import.meta.env.VITE_API_PATH;
+
 
 function App() {
+  const [formData, setFormData] = useState({
+    username: "example@gmail.com",
+    password: ""
+  });
+  const [isAuth, setIsAuth] = useState(false);
+
+  const [products, setProducts] = useState([]);
+  const [tempProduct, setTempProduct] = useState(null);
+
+
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    // console.log(name, value);
+    setFormData({ ...formData, [name]: value });
+  };
+
+  const getProducts = async () => {
+    try {
+      const response = await axios.get(`https://${API_BASE}/api/${API_PATH}/products`);
+      console.log("取得產品列表成功", response.data.products);
+      setProducts(response.data.products);
+    } catch (error) {
+      console.error("取得產品列表失敗", error.response.data);
+    }
+  };
+
+  const onSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      const response = await axios.post(`https://${API_BASE}/admin/signin`, formData);
+      //console.log("登入成功", response.data);
+      const {token, exprired} = response.data;
+      document.cookie = `hexToken=${token}; expires=${new Date(exprired *1000)}; path=/`;
+      axios.defaults.headers.common["Authorization"] = token;
+      getProducts();
+      setIsAuth(true);
+    }catch (error) {
+      setIsAuth(false);
+      console.error("登入失敗", error.response.data);
+    }
+  };
+  const checkLogin = async () => {
+    try {
+      const token = document.cookie
+        .split('; ')
+        .find(row => row.startsWith('hexToken='))
+        ?.split('=')[1];
+      if (token) {
+        axios.defaults.headers.common["Authorization"] = token;
+      }
+      const response = await axios.post(`https://${API_BASE}/api/user/check`);
+      console.log("已登入", response.data);
+     }catch (error) {
+      console.error("尚未登入", error.response?.data.message);
+    }
+  };
 
   return (
-    <div className="App">
-      <Navbar />
-      <div className="container mt-3">
-        <Routes>
-          <Route path="/" element={<Home />} />
-          <Route path="/about" element={<About />} />
-          <Route path="/album" element={<AlbumLayout />}>
-            <Route index element={<AlbumIndex />} />
-          </Route>
-        </Routes>
-      </div>
-    </div>
+    <>
+      {
+        isAuth ? (
+          <div className="container">
+            <button
+              className="btn btn-danger mb-5"
+              type="button"
+              onClick={() => checkLogin()}
+            >
+              確認是否登入
+            </button>
+            <div className="row mt-5">
+              <div className="col-md-6">
+                <h2>產品列表</h2>
+                <table className="table">
+                  <thead>
+                    <tr>
+                      <th>產品名稱</th>
+                      <th>原價</th>
+                      <th>售價</th>
+                      <th>是否啟用</th>
+                      <th>查看細節</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {products.map((item) => (
+                      <tr key={item.id}>
+                        <td>{item.title}</td>
+                        <td>{item.origin_price}</td>
+                        <td>{item.price}</td>
+                        <td>
+                          {
+                            item.is_enabled ? "啟用" : "未啟用"
+                          }
+                        </td>
+                        <td>
+                          <button className="btn btn-primary" onClick={()=>{
+                              setTempProduct(item);
+                            }}>查看細節</button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              <div className="col-md-6">
+                <h2>單一產品細節</h2>
+                {tempProduct ? (
+                  <div className="card mb-3">
+                    <img src={tempProduct.imageUrl} className="card-img-top primary-image" alt="主圖" />
+                    <div className="card-body">
+                      <h5 className="card-title">
+                        {tempProduct.title}
+                        <span className="badge bg-primary ms-2">{
+                            tempProduct.category
+                          }</span>
+                      </h5>
+                      <p className="card-text">商品描述：{tempProduct.description}</p>
+                      <p className="card-text">商品內容：{tempProduct.content}</p>
+                      <div className="d-flex">
+                        <p className="card-text text-secondary"><del>{tempProduct.origin_price}</del></p>
+                        元 / {tempProduct.price} 元
+                      </div>
+                      <h5 className="mt-3">更多圖片：</h5>
+                      <div class="d-flex flex-wrap">
+                        {
+                          tempProduct.imagesUrl.map(
+                            (url,index) => (
+                              <img key={index} src={url} className="images" />
+                            )
+                          )
+                        }
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <p className="text-secondary">請選擇一個商品查看</p>
+                )}
+              </div>
+            </div>
+          </div>
+        ) : (
+          <div className="container login">
+            <h1>請先登入</h1>
+            <form className="form-floating" onSubmit={(e) => onSubmit(e)}>
+              <div className="form-floating mb-3">
+                <input
+                  type="text"
+                  className="form-control"
+                  name="username"
+                  placeholder="username"
+                  value={formData.username}
+                  onChange={(e) => handleInputChange(e)}
+                />
+                <label htmlFor="username">Username</label>
+              </div>
+              <div className="form-floating">
+                <input
+                  type="password"
+                  className="form-control"
+                  name="password"
+                  placeholder="Password"
+                  value={formData.password}
+                  onChange={(e) => handleInputChange(e)}
+                />
+                <label htmlFor="password">Password</label>
+              </div>
+              <button type="submit" className="btn btn-primary w-100 mt-3">登入</button>
+            </form>
+          </div>
+        )
+      }
+    </>
   )
 }
 

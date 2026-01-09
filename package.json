@@ -11,6 +11,7 @@
     "deploy": "gh-pages -d dist"
   },
   "dependencies": {
+    "@fontsource/noto-sans-tc": "^5.2.8",
     "axios": "^1.13.2",
     "bootstrap": "^5.3.8",
     "gh-pages": "^6.3.0",
