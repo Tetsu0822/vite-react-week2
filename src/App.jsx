@@ -16,7 +16,7 @@ const API_PATH = import.meta.env.VITE_API_PATH;
 
 function App() {
   const [formData, setFormData] = useState({
-    username: "example@gmail.com",
+    email: "",
     password: ""
   });
   const [isAuth, setIsAuth] = useState(false);
@@ -46,8 +46,8 @@ function App() {
     try {
       const response = await axios.post(`https://${API_BASE}/admin/signin`, formData);
       //console.log("登入成功", response.data);
-      const {token, exprired} = response.data;
-      document.cookie = `hexToken=${token}; expires=${new Date(exprired *1000)}; path=/`;
+      const {token} = response.data;
+      document.cookie = `hexToken=${token}; expires=${new Date()}; path=/`;
       axios.defaults.headers.common["Authorization"] = token;
       getProducts();
       setIsAuth(true);
